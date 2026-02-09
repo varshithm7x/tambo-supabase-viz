@@ -1,131 +1,97 @@
-# Tambo Template
+# TamboBase: The Generative Admin Panel
 
-This is a starter NextJS app with Tambo hooked up to get your AI app development started quickly.
+> **Turn your Supabase database into a dynamic, effortless admin dashboard using natural language.**
 
-## Get Started
+![TamboBase Banner](https://img.shields.io/badge/Status-Beta-blue?style=for-the-badge)
+![Tech Stack](https://img.shields.io/badge/Stack-Next.js_15_|_Tambo_SDK_|_Supabase-black?style=for-the-badge)
 
-1. Run `npm create-tambo@latest my-tambo-app` for a new project
+**TamboBase** is an AI-powered interface that builds itself in real-time. Instead of manually coding static admin views, charts, and tables, you simply chat with your database. The system understands your schema, executes secure SQL queries, and renders the perfect UI component (Charts, Kanban, Tables) for your data instantly.
 
-2. `npm install`
+---
 
-3. `npx tambo init`
+## 🚀 Why TamboBase?
 
-- or rename `example.env.local` to `.env.local` and add your tambo API key you can get for free [here](https://tambo.co/dashboard).
+Traditional admin panels (like Retool or custom dashboards) require you to pre-define every view and write specific queries for every potential business question. 
 
-4. Run `npm run dev` and go to `localhost:3000` to use the app!
+**TamboBase is different.** It uses **Generative UI** to solve the "blank canvas" problem:
+1.  **Zero Boilerplate:** You don't build pages; you ask questions.
+2.  **Context Aware:** The AI knows your database structure automatically via the `listTables` tool.
+3.  **Real-Time Construction:** It decides *on the fly* whether you need a Bar Chart, a Pie Chart, or a Kanban board.
 
-## Customizing
+##  Key Features
 
-### Change what components tambo can control
+### 🔍 instant Discovery
+New to a database? Just ask **"What tables are in my database?"**. TamboBase scans the schema and provides a summary without you ever looking at an ER diagram.
 
-You can see how components are registered with tambo in `src/lib/tambo.ts`:
+###  Generative Visualizations
+Ask natural language questions to get rich, interactive UI components:
+*   **"Show me monthly revenue as a bar chart"** -> Renders a Recharts Bar Graph.
+*   **"Show users by region as a pie chart"** -> Renders a Pie Chart.
+*   **"Show top performing products"** -> Renders a sorted Data Table.
 
-```tsx
-export const components: TamboComponent[] = [
-  {
-    name: "Graph",
-    description:
-      "A component that renders various types of charts (bar, line, pie) using Recharts. Supports customizable data visualization with labels, datasets, and styling options.",
-    component: Graph,
-    propsSchema: graphSchema,
-  },
-  // Add more components here
-];
+###  Intelligent Kanban Boards
+Have data with statuses? Ask **"Show me tasks grouped by status"**. TamboBase automatically groups your data and renders a drag-and-drop style Kanban board.
+
+###  Admin Capabilities
+It's not just read-only. You can perform schema migrations directly through chat:
+*   **"Add a 'priority' column to the tasks table"**
+*   **"Create a new table for customer feedback"**
+
+---
+
+##   Tech Stack
+
+*   **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
+*   **AI Orchestration:** [Tambo SDK](https://tambo.co/) (@tambo-ai/react)
+*   **Database:** [Supabase](https://supabase.com/) (PostgreSQL)
+*   **Styling:** Tailwind CSS & Shadcn/UI
+*   **Deployment:** Vercel
+
+---
+
+##   Getting Started
+
+### 1. Prerequisites
+*   A [Supabase](https://supabase.com/) project.
+*   A [Tambo](https://tambo.co/) account and API Key.
+
+### 2. Clone & Install
+```bash
+git clone https://github.com/yourusername/tambo-base.git
+cd tambo-base
+npm install
 ```
 
-You can install the graph component into any project with:
+### 3. Environment Setup
+Rename `example.env.local` to `.env.local` and add your keys:
 
 ```bash
-npx tambo add graph
+# Tambo AI Key
+NEXT_PUBLIC_TAMBO_API_KEY=your_tambo_key_here
+
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_project_url
+# Use the Service Role Key to allow the AI to perform queries and schema changes
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-The example Graph component demonstrates several key features:
-
-- Different prop types (strings, arrays, enums, nested objects)
-- Multiple chart types (bar, line, pie)
-- Customizable styling (variants, sizes)
-- Optional configurations (title, legend, colors)
-- Data visualization capabilities
-
-Update the `components` array with any component(s) you want tambo to be able to use in a response!
-
-You can find more information about the options [here](https://docs.tambo.co/concepts/generative-interfaces/generative-components)
-
-### Add tools for tambo to use
-
-Tools are defined with `inputSchema` and `outputSchema`:
-
-```tsx
-export const tools: TamboTool[] = [
-  {
-    name: "globalPopulation",
-    description:
-      "A tool to get global population trends with optional year range filtering",
-    tool: getGlobalPopulationTrend,
-    inputSchema: z.object({
-      startYear: z.number().optional(),
-      endYear: z.number().optional(),
-    }),
-    outputSchema: z.array(
-      z.object({
-        year: z.number(),
-        population: z.number(),
-        growthRate: z.number(),
-      }),
-    ),
-  },
-];
+### 4. Run Locally
+```bash
+npm run dev
 ```
+Open [http://localhost:3000](http://localhost:3000) and start chatting with your database!
 
-Find more information about tools [here.](https://docs.tambo.co/concepts/tools)
+---
 
-### The Magic of Tambo Requires the TamboProvider
+## 🧠 How It Works
 
-Make sure in the TamboProvider wrapped around your app:
+1.  **User Prompt:** You ask "Show me sales by month."
+2.  **Tambo Agent:** The AI analyzes the intent and calls the registered **Model Context Protocol (MCP)** tools defined in `src/lib/tambo.ts`.
+3.  **SQL Execution:** The `querySupabase` tool generates a secure SQL query and executes it against your Supabase instance.
+4.  **Component Selection:** The AI selects the best component (e.g., `<Graph />` or `<DataTable />`) to visualize the returned JSON data.
+5.  **Streaming Render:** The UI streams to the client instantly.
 
-```tsx
-...
-<TamboProvider
-  apiKey={process.env.NEXT_PUBLIC_TAMBO_API_KEY!}
-  components={components} // Array of components to control
-  tools={tools} // Array of tools it can use
->
-  {children}
-</TamboProvider>
-```
+---
 
-In this example we do this in the `Layout.tsx` file, but you can do it anywhere in your app that is a client component.
-
-### Voice input
-
-The template includes a `DictationButton` component using the `useTamboVoice` hook for speech-to-text input.
-
-### MCP (Model Context Protocol)
-
-The template includes MCP support for connecting to external tools and resources. You can use the MCP hooks from `@tambo-ai/react/mcp`:
-
-- `useTamboMcpPromptList` - List available prompts from MCP servers
-- `useTamboMcpPrompt` - Get a specific prompt
-- `useTamboMcpResourceList` - List available resources
-
-See `src/components/tambo/mcp-components.tsx` for example usage.
-
-### Change where component responses are shown
-
-The components used by tambo are shown alongside the message response from tambo within the chat thread, but you can have the result components show wherever you like by accessing the latest thread message's `renderedComponent` field:
-
-```tsx
-const { thread } = useTambo();
-const latestComponent =
-  thread?.messages[thread.messages.length - 1]?.renderedComponent;
-
-return (
-  <div>
-    {latestComponent && (
-      <div className="my-custom-wrapper">{latestComponent}</div>
-    )}
-  </div>
-);
-```
-
-For more detailed documentation, visit [Tambo's official docs](https://docs.tambo.co).
+## 🔒 Security Note
+This project uses the `SUPABASE_SERVICE_ROLE_KEY` on the server-side to allow the AI agent to perform flexible database operations. Ensure extensive RLS (Row Level Security) policies are not blocking the necessary admin actions, or use this tool in a trusted internal environment.
